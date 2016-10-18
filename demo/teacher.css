@@ -4,6 +4,7 @@ body {
 }
 
 #aCanvas {
+  position: fixed;
   width: 800px;
   height: 600px;
 }

@@ -41,16 +41,6 @@ THE SOFTWARE.
 <script src="/socket.io/socket.io.js"></script>
 <script src="../rtc/lib/adapter.js"></script>
 
-<script>
-  isTeacher = true;
-  document.addEventListener('keydown', function(evt) {sendEvent(evt);}, false);
-  document.addEventListener('keyup', function(evt) {sendEvent(evt);}, false);
-  document.addEventListener('mousedown', function(evt) {sendEvent(evt);}, false);
-  document.addEventListener('mousemove', function(evt) {sendEvent(evt);}, false);
-  document.addEventListener('mouseup', function(evt) {sendEvent(evt);}, false);
-</script>
-<script src="../rtc/main.js"></script>
-
 </head>
 <body>
     <div id="sqHeader">
@@ -74,6 +64,14 @@ THE SOFTWARE.
     </div>
     <canvas id="aCanvas"></canvas>
     <div id="sqSpinner"><div></div></div>
-<div id="cursor">X</div>
+<script>
+  isTeacher = true;
+  document.addEventListener('keydown', function(evt) {sendEvent(evt);}, false);
+  document.addEventListener('keyup', function(evt) {sendEvent(evt);}, false);
+  document.addEventListener('mousedown', function(evt) {sendEvent(evt);}, false);
+  document.addEventListener('mousemove', function(evt) {sendEvent(evt);}, false);
+  document.addEventListener('mouseup', function(evt) {sendEvent(evt);}, false);
+</script>
+<script src="../rtc/main.js"></script>
 </body>
 </html>
