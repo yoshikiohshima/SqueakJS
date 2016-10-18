@@ -1,0 +1,9 @@
+{
+  "name": "SqueakJS-EventServer",
+  "version": "0.0.1",
+  "description": "SqueakJS-EventServer",
+  "dependencies": {
+    "node-static": "0.7.7",
+    "socket.io": "1.2.0"
+  }
+}
