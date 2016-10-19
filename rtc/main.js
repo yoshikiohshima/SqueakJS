@@ -13,7 +13,6 @@
 
 var configuration = null;
 
-// var roomURL = document.getElementById('url');
 var aCanvas = document.getElementById('aCanvas');
 var trail = document.getElementById('events');
 var teacherCursor = document.getElementById('cursor');
@@ -23,6 +22,9 @@ var sqContextH = 600;
 if (sqCanvas) {
   var sqContext = sqCanvas.getContext('2d');
 }
+
+var remoteStream;
+var localStream;
 
 function getRoleFromURL(url) {
   var queryString = url ? url.split('?')[1] : window.location.search.slice(1);
@@ -173,35 +175,43 @@ function createPeerConnection(isInitiator, config) {
               config);
   peerConn = new RTCPeerConnection(config);
 
-// send any ice candidates to the other peer
-peerConn.onicecandidate = function(event) {
-  console.log('icecandidate event:', event);
-  if (event.candidate) {
-    sendMessage({
-      type: 'candidate',
-      label: event.candidate.sdpMLineIndex,
-      id: event.candidate.sdpMid,
-      candidate: event.candidate.candidate
-    });
-  } else {
-    console.log('End of candidates.');
-  }
-};
-
-if (isInitiator) {
-  console.log('Creating Data Channel');
-  dataChannel = peerConn.createDataChannel('photos');
-  onDataChannelCreated(dataChannel);
-
-  console.log('Creating an offer');
-  peerConn.createOffer(onLocalSessionCreated, logError);
-} else {
-  peerConn.ondatachannel = function(event) {
-    console.log('ondatachannel:', event.channel);
-    dataChannel = event.channel;
-    onDataChannelCreated(dataChannel);
+  // send any ice candidates to the other peer
+  peerConn.onicecandidate = function(event) {
+    console.log('icecandidate event:', event);
+    if (event.candidate) {
+      sendMessage({
+        type: 'candidate',
+        label: event.candidate.sdpMLineIndex,
+        id: event.candidate.sdpMid,
+        candidate: event.candidate.candidate
+      });
+    } else {
+      console.log('End of candidates.');
+    }
   };
-}
+
+  if (isInitiator) {
+    console.log('Creating Data Channel');
+    dataChannel = peerConn.createDataChannel('photos');
+    onDataChannelCreated(dataChannel);
+
+    console.log('Creating an offer');
+    peerConn.createOffer(onLocalSessionCreated, logError);
+
+    peerConn.onaddstream = function(event) {
+      console.log('Remote stream added.');
+      aCanvas.src = window.URL.createObjectURL(event.stream);
+      remoteStream = event.stream;
+    };
+  } else {
+    peerConn.ondatachannel = function(event) {
+      console.log('ondatachannel:', event.channel);
+      dataChannel = event.channel;
+      onDataChannelCreated(dataChannel);
+    };
+
+    startStreamingCanvas();
+  }
 }
 
 function onLocalSessionCreated(desc) {
@@ -223,6 +233,17 @@ function onDataChannelCreated(channel) {
   receiveDataFirefoxFactory() : receiveDataChromeFactory();
 }
 
+function startStreamingCanvas(canvas) {
+  if (!canvas) {
+    canvas = sqCanvas;
+  }
+  if (peerConn) {
+    localStream = canvas.captureStream(30);
+    console.log('adding a stream: ' + localStream);
+    return peerConn.addStream(localStream);
+  }
+}
+
 function receiveDataChromeFactory() {
   var buf, count, type;
 
@@ -232,7 +253,7 @@ function receiveDataChromeFactory() {
       type = payload >> 24;
       var len = payload & 0xFFFFFF;
       if (type == dataTypes.event) {
-        console.log('expecting an event.');
+        //console.log('expecting an event.');
         //renderEvent(buf);
       } else if (type == dataTypes.image) {
         buf = window.buf = new Uint8ClampedArray(len);
@@ -247,7 +268,6 @@ function receiveDataChromeFactory() {
     if (type == dataTypes.event) {
       // assuming this 12 bytes data won't get split during the transimission
       buf = new Uint32Array(event.data);
-      console.log('Done. Rendering event.');
       renderEvent(buf);
       buf = null;
       type = null;
@@ -312,7 +332,6 @@ function sendEvent(evt) {
     var buf = encodeEvent(evt);
     dataChannel.send(dataTypes.event << 24 | buf.byteLength);
 
-    console.log('Sending an encoded event of:' + evt);
     dataChannel.send(buf);
   }
 }
@@ -346,7 +365,6 @@ function logError(err) {
 function encodeEvent(evt) {
    var v = new Uint32Array(3);
    var type = evt.type;
-   console.log('encode: ', evt.type);
    v[0] = eventTypes[type];
    if (v[0] <= 1) {
      v[1] = evt.keyCode;
