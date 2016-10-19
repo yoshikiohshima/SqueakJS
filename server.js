@@ -23,7 +23,7 @@ function maybeStart() {
     learner[0].join(room);
     socket.emit('joined', room, socket.id);
     io.sockets.in(room).emit('ready', room);
-    socket.broadcast.emit('ready', room);
+//    socket.broadcast.emit('ready', room);
   }
 }
 

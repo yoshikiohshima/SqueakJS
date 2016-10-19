@@ -26,6 +26,8 @@ if (sqCanvas) {
 var remoteStream;
 var localStream;
 
+var isLearner = !isTeacher;
+
 function getRoleFromURL(url) {
   var queryString = url ? url.split('?')[1] : window.location.search.slice(1);
   var obj = {};
@@ -97,8 +99,8 @@ socket.on('full', function(room) {
 });
 
 socket.on('ready', function(room) {
-  console.log('Socket is ready' + room);
-  createPeerConnection(isTeacher, configuration);
+  console.log('Socket is ready ' + room);
+  createPeerConnection(isLearner, configuration);
 });
 
 socket.on('log', function(array) {
@@ -110,7 +112,7 @@ socket.on('message', function(message) {
   signalingMessageCallback(message);
 });
 
-if (isTeacher) {
+if (isLearner) {
   socket.emit('newTeacher', room);
 } else {
   socket.emit('newLearner', room);
@@ -191,8 +193,9 @@ function createPeerConnection(isInitiator, config) {
   };
 
   if (isInitiator) {
+    startStreamingCanvas();
     console.log('Creating Data Channel');
-    dataChannel = peerConn.createDataChannel('photos');
+    dataChannel = peerConn.createDataChannel('squeak');
     onDataChannelCreated(dataChannel);
 
     console.log('Creating an offer');
@@ -210,7 +213,6 @@ function createPeerConnection(isInitiator, config) {
       onDataChannelCreated(dataChannel);
     };
 
-    startStreamingCanvas();
   }
 }
 
@@ -239,7 +241,7 @@ function startStreamingCanvas(canvas) {
   }
   if (peerConn) {
     localStream = canvas.captureStream(30);
-    console.log('adding a stream: ' + localStream);
+    console.log('adding a stream to: ', peerConn);
     return peerConn.addStream(localStream);
   }
 }
