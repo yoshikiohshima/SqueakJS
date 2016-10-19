@@ -3,11 +3,18 @@ body {
     font-family: sans-serif;
 }
 
-#aCanvas {
+video#aCanvas {
   position: fixed;
   width: 800px;
   height: 600px;
 }
+
+canvas#aCanvas {
+  position: fixed;
+  width: 800px;
+  height: 600px;
+}
+
 canvas.pixelated {
     image-rendering: -moz-crisp-edges;
     image-rendering: -webkit-optimize-contrast;

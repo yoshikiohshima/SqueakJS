@@ -6,7 +6,10 @@ canvas {
     position: fixed;
     background: #000;
     cursor: default;
+    width: 800px;
+    height: 600px;
 }
+
 canvas.pixelated {
     image-rendering: -moz-crisp-edges;
     image-rendering: -webkit-optimize-contrast;
