@@ -1,18 +1,17 @@
 body {
     background-color: #eae6d1;
     font-family: sans-serif;
+    padding: 0;
+    margin: 0;
 }
 
-video#aCanvas {
-  position: fixed;
-  width: 800px;
-  height: 600px;
+html {
+    padding: 0;
+    margin: 0;
 }
 
-canvas#aCanvas {
-  position: fixed;
-  width: 800px;
-  height: 600px;
+#aCanvas {
+  position: relative;
 }
 
 canvas.pixelated {
@@ -25,7 +24,6 @@ label {
     padding-right: 3em;
 }
 div#sqHeader {
-    position: fixed;
     top: 0;
     left: 0;
     right: 0;
@@ -33,7 +31,6 @@ div#sqHeader {
     border-bottom: 6px double gray;
 }
 div#sqFooter {
-    position: fixed;
     left: 0;
     right: 0;
     bottom: 0;

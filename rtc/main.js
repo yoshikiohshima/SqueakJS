@@ -346,8 +346,8 @@ function sendEvent(evt) {
 function renderEvent(buf) {
   var left = 0, top = 0;
   if (sqCanvas) {
-    left = parseInt(sqCanvas.style.left, 10);
-    top = parseInt(sqCanvas.style.top, 10);
+    left = sqCanvas.offsetLeft;
+    top = sqCanvas.offsetTop;
   }
   teacherCursor.style.left = ((buf[1] + left).toString() + 'px');
   teacherCursor.style.top = ((buf[2] + top).toString() + 'px');
@@ -370,14 +370,19 @@ function logError(err) {
 
 
 function encodeEvent(evt) {
+   var left = 0, top = 0;
+   if (aCanvas) {
+     left = aCanvas.offsetLeft;
+     top = aCanvas.offsetTop;
+   }
    var v = new Uint32Array(3);
    var type = evt.type;
    v[0] = eventTypes[type];
    if (v[0] <= 1) {
      v[1] = evt.keyCode;
    } else {
-     v[1] = evt.clientX;
-     v[2] = evt.clientY;
+     v[1] = evt.clientX - left;
+     v[2] = evt.clientY - top;
    }
    return v.buffer;
 }
