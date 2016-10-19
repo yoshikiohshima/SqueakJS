@@ -28,6 +28,11 @@ var localStream;
 
 var isLearner = !isTeacher;
 
+var offerOptions = {
+  offerToReceiveAudio: 1,
+  offerToReceiveVideo: 1
+};
+
 function getRoleFromURL(url) {
   var queryString = url ? url.split('?')[1] : window.location.search.slice(1);
   var obj = {};
@@ -199,13 +204,8 @@ function createPeerConnection(isInitiator, config) {
     onDataChannelCreated(dataChannel);
 
     console.log('Creating an offer');
-    peerConn.createOffer(onLocalSessionCreated, logError);
+    peerConn.createOffer(onLocalSessionCreated, logError, offerOptions);
 
-    peerConn.onaddstream = function(event) {
-      console.log('Remote stream added.');
-      aCanvas.src = window.URL.createObjectURL(event.stream);
-      remoteStream = event.stream;
-    };
   } else {
     peerConn.ondatachannel = function(event) {
       console.log('ondatachannel:', event.channel);
@@ -213,6 +213,11 @@ function createPeerConnection(isInitiator, config) {
       onDataChannelCreated(dataChannel);
     };
 
+    peerConn.onaddstream = function(event) {
+      console.log('Remote stream added.');
+      aCanvas.src = window.URL.createObjectURL(event.stream);
+      remoteStream = event.stream;
+    };
   }
 }
 
