@@ -13,18 +13,47 @@ var app = http.createServer(function(req, res) {
 var teachersQueue = [];
 var learnersQueue = [];
 
-function maybeStart() {
-  if (teachersQueue.length > 0 && learnersQueue.length > 0) {
-    var teacher = teachersQueue.shift();
-    var learner = learnersQueue.shift();
-    var socket = teacher[0];
-    var room = teacher[1];
-    socket.join(room);
-    learner[0].join(room);
-    socket.emit('joined', room, socket.id);
-    io.sockets.in(room).emit('ready', room);
-//    socket.broadcast.emit('ready', room);
+function findAvailableFrom(queue) {
+  while (true) {
+    if (queue.length == 0) {
+      return null;
+    }
+    var elem = queue[0];
+    if (elem[0].connected) {
+      return elem;
+    } else {
+      queue.shift();
+    }
   }
+}
+
+function clearnupIn(queue, sock) {
+  while (true) {
+    if (queue.length == 0) {
+      return null;
+    }
+    var elem = queue[0];
+    if (elem[0].connected) {
+      return elem;
+    } else {
+      queue.shift();
+    }
+  }
+}
+
+function maybeStart() {
+    var teacher = findAvailableFrom(teachersQueue);
+    var learner = findAvailableFrom(learnersQueue);
+    if (teacher && learner) {
+      teachersQueue.shift();
+      learnersQueue.shift();
+      var socket = teacher[0];
+      var room = teacher[1];
+      socket.join(room);
+      learner[0].join(room);
+      socket.emit('joined', room, socket.id);
+      io.sockets.in(room).emit('ready', room);
+    }
 }
 
 var io = socketIO.listen(app);
@@ -72,4 +101,7 @@ io.sockets.on('connection', function(socket) {
     console.log('received bye');
   });
 
+  socket.on('disconnect', function(){
+    console.log('disconnected');
+  });
 });
