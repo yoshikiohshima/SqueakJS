@@ -27,7 +27,7 @@ function findAvailableFrom(queue) {
   }
 }
 
-function clearnupIn(queue, sock) {
+function cleanupIn(queue, sock) {
   while (true) {
     if (queue.length == 0) {
       return null;
@@ -103,5 +103,11 @@ io.sockets.on('connection', function(socket) {
 
   socket.on('disconnect', function(){
     console.log('disconnected');
+  });
+
+  socket.on('reset', function(){
+    console.log('reset queues');
+    teachersQueue = [];
+    learnersQueue = [];
   });
 });
