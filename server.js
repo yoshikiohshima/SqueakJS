@@ -1,12 +1,25 @@
 'use strict';
 
+var server;
+if (process.argv.length > 2) {
+  var useHTTPS = true;
+  var tls = require('tls');
+  var serverOptions = {
+    key: fs.readFileSync('privkey1.pem'),
+    cert: fs.readFileSync('cert1.pem')
+  };
+  server = tls;
+} else {
+  var http = require('http');
+  server = http;
+}
+
 var os = require('os');
 var nodeStatic = require('node-static');
-var http = require('http');
 var socketIO = require('socket.io');
 
 var fileServer = new(nodeStatic.Server)();
-var app = http.createServer(function(req, res) {
+var app = server.createServer(function(req, res) {
   fileServer.serve(req, res);
 }).listen(8080);
 

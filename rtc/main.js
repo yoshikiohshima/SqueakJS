@@ -25,8 +25,15 @@ if (sqCanvas) {
 
 var remoteStream;
 var localStream;
+var clonedStream;
+var mediaRecorder;
+
+var audioStream;
 
 var isLearner = !isTeacher;
+console.log(isLearner);
+var learnerStartTime = Date.now();
+
 
 var offerOptions = {
   offerToReceiveAudio: 1,
@@ -118,9 +125,10 @@ socket.on('message', function(message) {
 });
 
 if (isLearner) {
-  socket.emit('newTeacher', room);
-} else {
+  startStreamingCanvas();
   socket.emit('newLearner', room);
+} else {
+  socket.emit('newTeacher', room);
 }
 
 if (location.hostname.match(/localhost|127\.0\.0/)) {
@@ -198,7 +206,7 @@ function createPeerConnection(isInitiator, config) {
   };
 
   if (isInitiator) {
-    startStreamingCanvas();
+    setupRemoteStream();
     console.log('Creating Data Channel');
     dataChannel = peerConn.createDataChannel('squeak');
     onDataChannelCreated(dataChannel);
@@ -214,7 +222,7 @@ function createPeerConnection(isInitiator, config) {
     };
 
     peerConn.onaddstream = function(event) {
-      console.log('Remote stream added.');
+      console.log('Remote stream added.', event);
       aCanvas.src = window.URL.createObjectURL(event.stream);
       remoteStream = event.stream;
     };
@@ -240,16 +248,45 @@ function onDataChannelCreated(channel) {
   receiveDataFirefoxFactory() : receiveDataChromeFactory();
 }
 
+var totalSize = 0;
+var chunks = [];
+
 function startStreamingCanvas(canvas) {
   if (!canvas) {
     canvas = sqCanvas;
   }
-  if (peerConn) {
-    localStream = canvas.captureStream(30);
-    console.log('adding a stream to: ', peerConn);
-    return peerConn.addStream(localStream);
-  }
+  localStream = canvas.captureStream(30);
+  clonedStream = localStream.clone();
+  mediaRecorder = new MediaRecorder(clonedStream);
+  mediaRecorder.start();
+  mediaRecorder.ondataavailable = function handleDataAvailable(event) {
+    if (event.data.size > 0) {
+      chunks.push(event.data);
+      totalSize += event.data.size;
+      //console.log(event.data.size);
+    } else {
+      // ...
+    }
+  };
 }
+
+function setupRemoteStream() {
+  if (peerConn && localStream) {
+    peerConn.addStream(localStream);
+  }
+};
+
+function saveChunks() {
+  var superBuffer = new Blob(chunks, {type: 'videow/webm'});
+  var url = URL.createObjectURL(superBuffer);
+  var a = document.createElement('a');
+  document.body.appendChild(a);
+  a.style = 'display: none';
+  a.href = url;
+  a.download = 'test.webm';
+  a.click();
+  window.URL.revokeObjectURL(url);
+};
 
 function receiveDataChromeFactory() {
   var buf, count, type;
