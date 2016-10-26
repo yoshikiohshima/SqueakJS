@@ -13,7 +13,8 @@
 
 var configuration = null;
 
-var aCanvas = document.getElementById('aCanvas');
+var videoCanvas = document.getElementById('videoCanvas');
+var audio = document.getElementById('audio');
 var trail = document.getElementById('events');
 var teacherCursor = document.getElementById('cursor');
 var sqCanvas = document.getElementById('sqCanvas');
@@ -23,7 +24,8 @@ if (sqCanvas) {
   var sqContext = sqCanvas.getContext('2d');
 }
 
-var remoteStream;
+var remoteStreams = [];
+
 var localStream;
 var clonedStream;
 var mediaRecorder;
@@ -33,7 +35,6 @@ var audioStream;
 var isLearner = !isTeacher;
 console.log(isLearner);
 var learnerStartTime = Date.now();
-
 
 var offerOptions = {
   offerToReceiveAudio: 1,
@@ -126,6 +127,7 @@ socket.on('message', function(message) {
 
 if (isLearner) {
   startStreamingCanvas();
+  startAudio();
   socket.emit('newLearner', room);
 } else {
   socket.emit('newTeacher', room);
@@ -223,8 +225,14 @@ function createPeerConnection(isInitiator, config) {
 
     peerConn.onaddstream = function(event) {
       console.log('Remote stream added.', event);
-      aCanvas.src = window.URL.createObjectURL(event.stream);
-      remoteStream = event.stream;
+      remoteStreams.push(event.stream);
+      var tracks = event.stream.getTracks();
+      if (tracks.length > 0 && tracks[0].kind == 'video') {
+        videoCanvas.src = window.URL.createObjectURL(event.stream);
+      } else if (tracks.length > 0 && tracks[0].kind == 'audio') {
+        audio.srcObject = event.stream;
+       //window.URL.createObjectURL(event.stream);
+      }
     };
   }
 }
@@ -268,11 +276,34 @@ function startStreamingCanvas(canvas) {
       // ...
     }
   };
-}
+};
 
 function setupRemoteStream() {
-  if (peerConn && localStream) {
-    peerConn.addStream(localStream);
+  if (peerConn) {
+    if (localStream) {
+      peerConn.addStream(localStream);
+    }
+    if (audioStream) {
+      peerConn.addStream(audioStream);
+    }
+  }
+};
+
+function getGetUserMedia() {
+  // Note: Opera builds are unprefixed.
+  return navigator.getUserMedia || navigator.webkitGetUserMedia ||
+            navigator.mozGetUserMedia || navigator.msGetUserMedia;
+}
+
+function startAudio() {
+  var f = getGetUserMedia();
+  console.log('f', f);
+  if (f) {
+    f({audio: true, video: false},
+      function(stream) {
+        audioStream = stream;
+      },
+      function(err) {console.log(err)});
   }
 };
 
@@ -391,7 +422,7 @@ function renderEvent(buf) {
 }
 
 function renderImage(data) {
-  var context = aCanvas.getContext('2d');
+  var context = videoCanvas.getContext('2d');
   var img = context.createImageData(sqContextW, sqContextH);
   img.data.set(data);
   context.putImageData(img, 0, 0);
@@ -408,9 +439,9 @@ function logError(err) {
 
 function encodeEvent(evt) {
    var left = 0, top = 0;
-   if (aCanvas) {
-     left = aCanvas.offsetLeft;
-     top = aCanvas.offsetTop;
+   if (videoCanvas) {
+     left = videoCanvas.offsetLeft;
+     top = videoCanvas.offsetTop;
    }
    var v = new Uint32Array(3);
    var type = evt.type;

@@ -1,27 +1,28 @@
 'use strict';
 
-var server;
+var os = require('os');
+var fs = require('fs');
+var nodeStatic = require('node-static');
+var fileServer = new(nodeStatic.Server)();
+var socketIO = require('socket.io');
+
 if (process.argv.length > 2) {
-  var useHTTPS = true;
-  var tls = require('tls');
+  var server = require('https');
   var serverOptions = {
     key: fs.readFileSync('privkey1.pem'),
     cert: fs.readFileSync('cert1.pem')
   };
-  server = tls;
+  var app = server.createServer(serverOptions, function(req, res) {
+    fileServer.serve(req, res);
+  });
 } else {
-  var http = require('http');
-  server = http;
+  var server = require('http');
+  var app = server.createServer(function(req, res) {
+    fileServer.serve(req, res);
+  });
 }
 
-var os = require('os');
-var nodeStatic = require('node-static');
-var socketIO = require('socket.io');
-
-var fileServer = new(nodeStatic.Server)();
-var app = server.createServer(function(req, res) {
-  fileServer.serve(req, res);
-}).listen(8080);
+app.listen(8080);
 
 var teachersQueue = [];
 var learnersQueue = [];
